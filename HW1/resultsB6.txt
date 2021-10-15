@@ -1,0 +1,14 @@
+The number of node per task 48
+n = 10, p = 64, pi = 3.1424259850010978, relative error = 2.65e-04, time (sec) =   0.0020
+The number of node per task 32
+n = 10, p = 64, pi = 3.1424259850010978, relative error = 2.65e-04, time (sec) =   0.0006
+The number of node per task 16
+n = 10, p = 64, pi = 3.1424259850010978, relative error = 2.65e-04, time (sec) =   0.0084
+The number of node per task 8
+n = 10, p = 64, pi = 3.1424259850010978, relative error = 2.65e-04, time (sec) =   0.0223
+The number of node per task 4
+n = 10, p = 64, pi = 3.1424259850010983, relative error = 2.65e-04, time (sec) =   0.0228
+The number of node per task 2
+n = 10, p = 64, pi = 3.1424259850010983, relative error = 2.65e-04, time (sec) =   0.0864
+The number of node per task 1
+n = 10, p = 64, pi = 3.1424259850010983, relative error = 2.65e-04, time (sec) =   0.1073

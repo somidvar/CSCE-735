@@ -1,0 +1,29 @@
+Test results for part B
+The number of n 100 and number of p 64
+n = 100, p = 64, pi = 3.1416009869231249, relative error = 2.65e-06, time (sec) =   0.0222
+The number of n 100 and number of p 1
+n = 100, p = 1, pi = 3.1416009869231254, relative error = 2.65e-06, time (sec) =   0.0001
+The number of n 1000 and number of p 64
+n = 1000, p = 64, pi = 3.1415927369231262, relative error = 2.65e-08, time (sec) =   0.0182
+The number of n 1000 and number of p 1
+n = 1000, p = 1, pi = 3.1415927369231227, relative error = 2.65e-08, time (sec) =   0.0001
+The number of n 10000 and number of p 64
+n = 10000, p = 64, pi = 3.1415926544231265, relative error = 2.65e-10, time (sec) =   0.0178
+The number of n 10000 and number of p 1
+n = 10000, p = 1, pi = 3.1415926544231341, relative error = 2.65e-10, time (sec) =   0.0001
+The number of n 100000 and number of p 64
+n = 100000, p = 64, pi = 3.1415926535981273, relative error = 2.65e-12, time (sec) =   0.0159
+The number of n 100000 and number of p 1
+n = 100000, p = 1, pi = 3.1415926535981615, relative error = 2.66e-12, time (sec) =   0.0002
+The number of n 1000000 and number of p 64
+n = 1000000, p = 64, pi = 3.1415926535898753, relative error = 2.62e-14, time (sec) =   0.0317
+The number of n 1000000 and number of p 1
+n = 1000000, p = 1, pi = 3.1415926535897643, relative error = 9.19e-15, time (sec) =   0.0023
+The number of n 10000000 and number of p 64
+n = 10000000, p = 64, pi = 3.1415926535897949, relative error = 5.65e-16, time (sec) =   0.0236
+The number of n 10000000 and number of p 1
+n = 10000000, p = 1, pi = 3.1415926535897309, relative error = 1.98e-14, time (sec) =   0.0159
+The number of n 100000000 and number of p 64
+n = 100000000, p = 64, pi = 3.1415926535897940, relative error = 2.83e-16, time (sec) =   0.0343
+The number of n 100000000 and number of p 1
+n = 100000000, p = 1, pi = 3.1415926535904264, relative error = 2.02e-13, time (sec) =   0.1512

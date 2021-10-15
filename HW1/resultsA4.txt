@@ -1,0 +1,15 @@
+Test results for part A
+The number of n 1000 and number of p 48
+Trials = 1000, Threads =   48, pi =   2.9920000000, error = 4.76e-02, time (sec) =   0.0018
+The number of n 10000 and number of p 48
+Trials = 10000, Threads =   48, pi =   3.1732000000, error = 1.01e-02, time (sec) =   0.0017
+The number of n 100000 and number of p 48
+Trials = 100000, Threads =   48, pi =   3.1550800000, error = 4.29e-03, time (sec) =   0.0018
+The number of n 1000000 and number of p 48
+Trials = 1000000, Threads =   48, pi =   3.1453960000, error = 1.21e-03, time (sec) =   0.0021
+The number of n 10000000 and number of p 48
+Trials = 10000000, Threads =   48, pi =   3.1456372000, error = 1.29e-03, time (sec) =   0.0079
+The number of n 100000000 and number of p 48
+Trials = 100000000, Threads =   48, pi =   3.1409400400, error = 2.08e-04, time (sec) =   0.0458
+The number of n 1000000000 and number of p 48
+Trials = 1000000000, Threads =   48, pi =   3.1416179080, error = 8.04e-06, time (sec) =   0.3224

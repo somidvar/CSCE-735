@@ -1,0 +1,44 @@
+#!/bin/bash
+##ENVIRONMENT SETTINGS; CHANGE WITH CAUTION
+#SBATCH --export=NONE            #Do not propagate environment
+#SBATCH --get-user-env=L         #Replicate login environment
+#
+##NECESSARY JOB SPECIFICATIONS
+#SBATCH --job-name=JobName       #Set the job name to "JobName"
+#SBATCH --time=0:30:00           #Set the wall clock limit to 0hr and 30min
+#SBATCH --nodes=16               #Request 16 node
+#SBATCH --ntasks-per-node=4      #Request 4 tasks/cores per node
+#SBATCH --mem=8G                 #Request 8GB per node 
+#SBATCH --output=output.%j       #Send stdout/err to "output.[jobID]" 
+#
+##OPTIONAL JOB SPECIFICATIONS
+##SBATCH --mail-type=ALL              #Send email on all job events
+##SBATCH --mail-user=email_address    #Send all emails to email_address 
+#
+##First Executable Line
+#
+module purge
+module load intel/2020b       # load Intel software stack 
+mpiicc -o compute_pi_mpi.exe compute_pi_mpi.c
+echo "Test results for part B" > resultsB5.txt
+for counter in {0..6}
+do
+	let n=10**8
+	let p=2**counter
+	echo "The number of n" $n "and number of p" $p >> resultsB5.txt
+	mpirun -np $p ./compute_pi_mpi.exe $n >>resultsB5.txt
+done
+
+
+echo "Test results for part B" > resultsB7.txt
+for counter in {2..8}
+do
+	let n=10**counter
+	let p=64
+	echo "The number of n" $n "and number of p" $p >> resultsB7.txt
+	mpirun -np $p ./compute_pi_mpi.exe $n >>resultsB7.txt
+	
+	let p=1
+	echo "The number of n" $n "and number of p" $p >> resultsB7.txt
+	mpirun -np $p ./compute_pi_mpi.exe $n >>resultsB7.txt
+done

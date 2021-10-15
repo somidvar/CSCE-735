@@ -1,0 +1,15 @@
+Test results for part B
+The number of n 100000000 and number of p 1
+n = 100000000, p = 1, pi = 3.1415926535904264, relative error = 2.02e-13, time (sec) =   0.1519
+The number of n 100000000 and number of p 2
+n = 100000000, p = 2, pi = 3.1415926535900223, relative error = 7.29e-14, time (sec) =   0.0760
+The number of n 100000000 and number of p 4
+n = 100000000, p = 4, pi = 3.1415926535902168, relative error = 1.35e-13, time (sec) =   0.0389
+The number of n 100000000 and number of p 8
+n = 100000000, p = 8, pi = 3.1415926535896137, relative error = 5.71e-14, time (sec) =   0.0328
+The number of n 100000000 and number of p 16
+n = 100000000, p = 16, pi = 3.1415926535897754, relative error = 5.65e-15, time (sec) =   0.0340
+The number of n 100000000 and number of p 32
+n = 100000000, p = 32, pi = 3.1415926535897736, relative error = 6.22e-15, time (sec) =   0.0364
+The number of n 100000000 and number of p 64
+n = 100000000, p = 64, pi = 3.1415926535897940, relative error = 2.83e-16, time (sec) =   0.0320
