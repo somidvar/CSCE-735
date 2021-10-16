@@ -26,10 +26,10 @@ int list_size;   // List size
 int *list;       // List of values
 int *work;       // Work array
 int *list_orig;  // Original list of values, used for error checking
+
+int* ptr;
+int* myIDPtr;
 int np, my_list_size,level;
-int ptr[1000 + 1];//-------------------------------------------------------This has to be fixed
-pthread_t threads[1000];//----------------------------------this has to be fixed
-int myIDPtr[1000];//--------------------this needs to be fixed
 
 // Print list - for debugging
 void print_list(int *list, int list_size)
@@ -203,6 +203,25 @@ void* threadFunc(void* threadIDPtr){
         
         // list[i] = work[i];//--------this line is added!
     }
+    // for (i = ptr[my_id] + 1; i < ptr[my_id + 1]; i++)
+    // {        
+    //     list[i] = work[i];//--------this line is added!
+    // }    
+    return 0;
+}
+
+
+void* threadFuncAux(void* threadIDPtr){
+
+    int i, my_id;
+    int* threadID=(int*)threadIDPtr;
+    my_id=threadID[0];
+    // printf("My ID=%d\n",my_id);
+
+    for (i = ptr[my_id]; i < ptr[my_id + 1]; i++)
+    {
+        list[i] = work[i];
+    }
     return 0;
 }
 
@@ -214,6 +233,7 @@ void sort_list(int q)
 {
     int my_id,i;
     np = list_size / num_threads; // Sub list size
+    pthread_t threads[num_threads];
 
     // Initialize starting position for each sublist
     for (my_id = 0; my_id < num_threads; my_id++)
@@ -254,31 +274,19 @@ void sort_list(int q)
 
     for (level = 0; level < q; level++)
     {
-
-        // for(my_id=0;my_id<num_threads;my_id++){
-        //     threadFunc(my_id);
-        // }
         for(my_id=0;my_id<num_threads;my_id++){
             pthread_create( &threads[my_id], NULL, threadFunc, (void*) &myIDPtr[my_id]);
         }
         for(my_id=0;my_id<num_threads;my_id++){
             pthread_join(threads[my_id], NULL);
         }
-        // Copy work into list for next itertion
-        for (my_id = 0; my_id < num_threads; my_id++)
-        {
-            for (i = ptr[my_id]; i < ptr[my_id + 1]; i++)
-            {
-                list[i] = work[i];
-            }
-        }
+        //instead of copy pasting the whole work to list, I just swapped their pointer
+        int* temp=list;
+        list=work;
+        work=temp;
         if (DEBUG)
             print_list(list, list_size);
     }
-
-
-
-
 }
 
 // Main program - set up list of random integers and use threads to sort the list
@@ -289,7 +297,6 @@ void sort_list(int q)
 //
 int main(int argc, char *argv[])
 {
-
     struct timespec start, stop, stop_qsort;
     double total_time, time_res, total_time_qsort;
     int k, q, j, error;
@@ -326,11 +333,8 @@ int main(int argc, char *argv[])
     list_orig = (int *)malloc(list_size * sizeof(int));
     work = (int *)malloc(list_size * sizeof(int));
 
-    //
-    // VS: ... May need to initialize mutexes, condition variables,
-    // VS: ... and their attributes
-    //
-
+    ptr = (int *)malloc((num_threads+1) * sizeof(int));
+    myIDPtr = (int *)malloc((num_threads) * sizeof(int));
     // Initialize list of random integers; list will be sorted by
     // multi-threaded parallel merge sort
     // Copy list to list_orig; list_orig will be sorted by qsort and used
@@ -348,17 +352,8 @@ int main(int argc, char *argv[])
     // Create threads; each thread executes find_minimum
     clock_gettime(CLOCK_REALTIME, &start);
 
-    //
-    // VS: ... may need to initialize mutexes, condition variables, and their attributes
-    //
-
-    // Serial merge sort
-    // VS: ... replace this call with multi-threaded parallel routine for merge sort
-    // VS: ... need to create threads and execute thread routine that implements
-    // VS: ... parallel merge sort
-
     sort_list(q);
-
+    
     // Compute time taken
     clock_gettime(CLOCK_REALTIME, &stop);
     total_time = (stop.tv_sec - start.tv_sec) + 0.000000001 * (stop.tv_nsec - start.tv_nsec);
