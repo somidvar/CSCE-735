@@ -1,1 +1,48 @@
-
+Part A
+The the list with size of 2**4 and thread num of 2**1
+List Size = 16, Threads = 2, error = 0, time (sec) =   0.0002, qsort_time =   0.0000
+The the list with size of 2**4 and thread num of 2**2
+List Size = 16, Threads = 4, error = 0, time (sec) =   0.0003, qsort_time =   0.0000
+The the list with size of 2**4 and thread num of 2**3
+List Size = 16, Threads = 8, error = 0, time (sec) =   0.0007, qsort_time =   0.0000
+----------------------
+The the list with size of 2**20 and thread num of 2**4
+List Size = 1048576, Threads = 16, error = 0, time (sec) =   0.0219, qsort_time =   0.1776
+The the list with size of 2**24 and thread num of 2**8
+List Size = 16777216, Threads = 256, error = 0, time (sec) =   0.2213, qsort_time =   3.3260
+ 
+ 
+Part B
+The the list with size of 2**12 and thread num of 2**0
+List Size = 4096, Threads = 1, error = 0, time (sec) =   0.0024, qsort_time =   0.0006
+The the list with size of 2**12 and thread num of 2**1
+List Size = 4096, Threads = 2, error = 0, time (sec) =   0.0019, qsort_time =   0.0007
+The the list with size of 2**12 and thread num of 2**2
+List Size = 4096, Threads = 4, error = 0, time (sec) =   0.0029, qsort_time =   0.0007
+The the list with size of 2**12 and thread num of 2**4
+List Size = 4096, Threads = 16, error = 0, time (sec) =   0.0068, qsort_time =   0.0006
+The the list with size of 2**12 and thread num of 2**6
+List Size = 4096, Threads = 64, error = 0, time (sec) =   0.0076, qsort_time =   0.0015
+The the list with size of 2**12 and thread num of 2**8
+List Size = 4096, Threads = 256, error = 0, time (sec) =   0.0538, qsort_time =   0.0009
+The the list with size of 2**12 and thread num of 2**10
+List Size = 4096, Threads = 1024, error = 0, time (sec) =   0.1973, qsort_time =   0.0009
+----------------------
+The the list with size of 2**20 and thread num of 2**0
+List Size = 1048576, Threads = 1, error = 0, time (sec) =   0.1784, qsort_time =   0.1758
+The the list with size of 2**20 and thread num of 2**1
+List Size = 1048576, Threads = 2, error = 0, time (sec) =   0.0968, qsort_time =   0.1734
+The the list with size of 2**20 and thread num of 2**2
+List Size = 1048576, Threads = 4, error = 0, time (sec) =   0.0540, qsort_time =   0.1744
+The the list with size of 2**20 and thread num of 2**4
+List Size = 1048576, Threads = 16, error = 0, time (sec) =   0.0200, qsort_time =   0.1771
+The the list with size of 2**20 and thread num of 2**6
+List Size = 1048576, Threads = 64, error = 0, time (sec) =   0.0243, qsort_time =   0.1756
+The the list with size of 2**20 and thread num of 2**8
+List Size = 1048576, Threads = 256, error = 0, time (sec) =   0.0645, qsort_time =   0.1754
+The the list with size of 2**20 and thread num of 2**10
+List Size = 1048576, Threads = 1024, error = 0, time (sec) =   0.2533, qsort_time =   0.1728
+----------------------
+The the list with size of 2**28 and thread num of 2**0
+List Size = 268435456, Threads = 1, error = 0, time (sec) =  63.0482, qsort_time =  62.6405
+The the list with size of 2**28 and thread num of 2**1

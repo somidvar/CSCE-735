@@ -9,57 +9,53 @@
 #include <time.h>
 #include <limits.h>
 
-#define MAX_THREADS 65536
-#define MAX_LIST_SIZE 100000000
+#define MAX_THREADS     65536
+#define MAX_LIST_SIZE   INT_MAX
 
 #define DEBUG 0
 
 // Thread variables
 //
 // VS: ... declare thread variables, mutexes, condition varables, etc.,
-// VS: ... as needed for this assignment
+// VS: ... as needed for this assignment 
 //
 
 // Global variables
-int num_threads; // Number of threads to create - user input
-int list_size;   // List size
-int *list;       // List of values
-int *work;       // Work array
-int *list_orig;  // Original list of values, used for error checking
+int num_threads;		// Number of threads to create - user input 
+int list_size;			// List size
+int *list;			    // List of values
+int *work;			    // Work array
+int *list_orig;			// Original list of values, used for error checking
+int *ptr;      
+int q, np;     
 
-int* ptr;
-int* myIDPtr;
-int np, my_list_size,level;
+
+int* threadIDPtr;
+pthread_attr_t attr;
+pthread_barrier_t barrier;
 
 // Print list - for debugging
 void print_list(int *list, int list_size)
 {
-    int i;
-    for (i = 0; i < list_size; i++)
-    {
-        printf("[%d] \t %16d\n", i, list[i]);
-    }
     printf("--------------------------------------------------------------------\n");
+    for (int i = 0; i < list_size; i++)
+        printf("[%d] \t %16d\n", i, list[i]);
+    printf("--------------------------------------------------------------------\n"); 
 }
 
-// Comparison routine for qsort (stdlib.h) which is used to
+// Comparison routine for qsort (stdlib.h) which is used to 
 // a thread's sub-list at the start of the algorithm
 int compare_int(const void *a0, const void *b0)
 {
     int a = *(int *)a0;
     int b = *(int *)b0;
+    
     if (a < b)
-    {
         return -1;
-    }
     else if (a > b)
-    {
         return 1;
-    }
     else
-    {
         return 0;
-    }
 }
 
 // Return index of first element larger than or equal to v in sorted list
@@ -70,32 +66,30 @@ int compare_int(const void *a0, const void *b0)
 //
 int binary_search_lt(int v, int *list, int first, int last)
 {
-
     // Linear search code
     // int idx = first; while ((v > list[idx]) && (idx < last)) idx++; return idx;
 
-    int left = first;
-    int right = last - 1;
+    int left = first; 
+    int right = last-1; 
 
     if (list[left] >= v)
         return left;
     if (list[right] < v)
-        return right + 1;
-    int mid = (left + right) / 2;
+        return right+1;
+    
+    int mid = (left+right)/2; 
     while (mid > left)
     {
         if (list[mid] < v)
-        {
             left = mid;
-        }
         else
-        {
             right = mid;
-        }
-        mid = (left + right) / 2;
+        
+        mid = (left + right)/2;
     }
     return right;
 }
+    
 // Return index of first element larger than v in sorted list
 // ... return last if all elements are smaller than or equal to v
 // ... elements in list[first], list[first+1], ... list[last-1]
@@ -104,237 +98,152 @@ int binary_search_lt(int v, int *list, int first, int last)
 //
 int binary_search_le(int v, int *list, int first, int last)
 {
-
-    // Linear search code
-    // int idx = first; while ((v >= list[idx]) && (idx < last)) idx++; return idx;
-
-    int left = first;
-    int right = last - 1;
+    int left = first; 
+    int right = (last - 1);
 
     if (list[left] > v)
         return left;
     if (list[right] <= v)
-        return right + 1;
-    int mid = (left + right) / 2;
+        return right+1;
+    
+    int mid = (left+right)/2;
     while (mid > left)
     {
         if (list[mid] <= v)
-        {
             left = mid;
-        }
         else
-        {
             right = mid;
-        }
-        mid = (left + right) / 2;
+        mid = (left+right)/2;
     }
     return right;
 }
 
 
-void* threadFunc(void* threadIDPtr){
-
-    int i, my_id;
-    int* threadID=(int*)threadIDPtr;
-    my_id=threadID[0];
-    // printf("My ID=%d\n",my_id);
-
+// Function implements parallelized sort. This is a start routine for each thread.
+void *threadFunc(void* threadNum)
+{
+    int i, level, my_id;
+    int my_list_size;
 
     int my_own_blk, my_own_idx;
     int my_blk_size, my_search_blk, my_search_idx, my_search_idx_max;
     int my_write_blk, my_write_idx;
     int my_search_count;
     int idx, i_write;
-
+    my_id = *((int*)threadNum);
     
-    // Each thread scatters its sub_list into work array
-    my_blk_size = np * (1 << level);
+    // sort_sublists
+    my_list_size = ptr[my_id+1] - ptr[my_id];
+    qsort(&list[ptr[my_id]], my_list_size, sizeof(int), compare_int);
 
-    my_own_blk = ((my_id >> level) << level);
-    my_own_idx = ptr[my_own_blk];
+    for (level = 0; level < q; level++){
+        my_blk_size = np * (1 << level);
 
-    my_search_blk = ((my_id >> level) << level) ^ (1 << level);
-    my_search_idx = ptr[my_search_blk];
-    my_search_idx_max = my_search_idx + my_blk_size;
+        my_own_blk = ((my_id >> level) << level);
+        my_own_idx = ptr[my_own_blk];
 
-    my_write_blk = ((my_id >> (level + 1)) << (level + 1));
-    my_write_idx = ptr[my_write_blk];
+        my_search_blk = ((my_id >> level) << level) ^ (1 << level);
+        my_search_idx = ptr[my_search_blk];
+        my_search_idx_max = my_search_idx+my_blk_size;
 
-    idx = my_search_idx;
+        my_write_blk = ((my_id >> (level+1)) << (level+1));
+        my_write_idx = ptr[my_write_blk];
 
-    my_search_count = 0;
+        idx = my_search_idx;
+        
+        my_search_count = 0;
 
-    // Binary search for 1st element
-    if (my_search_blk > my_own_blk)
-    {
-        idx = binary_search_lt(list[ptr[my_id]], list, my_search_idx, my_search_idx_max);
-    }
-    else
-    {
-        idx = binary_search_le(list[ptr[my_id]], list, my_search_idx, my_search_idx_max);
-    }
-    my_search_count = idx - my_search_idx;
-    i_write = my_write_idx + my_search_count + (ptr[my_id] - my_own_idx);
-    work[i_write] = list[ptr[my_id]];
-
-    // Linear search for 2nd element onwards
-    for (i = ptr[my_id] + 1; i < ptr[my_id + 1]; i++)
-    {
+        pthread_barrier_wait(&barrier);
+        // Binary search for 1st element
         if (my_search_blk > my_own_blk)
-        {
-            while ((list[i] > list[idx]) && (idx < my_search_idx_max))
-            {
-                idx++;
-                my_search_count++;
-            }
-        }
+            idx = binary_search_lt(list[ptr[my_id]], list, my_search_idx, my_search_idx_max);
         else
-        {
-            while ((list[i] >= list[idx]) && (idx < my_search_idx_max))
-            {
-                idx++;
-                my_search_count++;
+            idx = binary_search_le(list[ptr[my_id]], list, my_search_idx, my_search_idx_max);
+        
+        my_search_count = idx - my_search_idx;
+        i_write = my_write_idx + my_search_count + (ptr[my_id]-my_own_idx);
+        work[i_write] = list[ptr[my_id]];
+
+        // Linear search for 2nd element onwards
+        for (i = ptr[my_id]+1; i < ptr[my_id+1]; i++){
+            if (my_search_blk > my_own_blk){
+                while ((list[i] > list[idx]) && (idx < my_search_idx_max)){
+                    idx++;
+                    my_search_count++;
+                }
             }
+            else{
+                while ((list[i] >= list[idx]) && (idx < my_search_idx_max)){
+                    idx++;
+                    my_search_count++;
+                }
+            }
+            i_write = my_write_idx + my_search_count + (i-my_own_idx);
+            work[i_write] = list[i];
         }
-        i_write = my_write_idx + my_search_count + (i - my_own_idx);
-        work[i_write] = list[i];
-        
-        
-        
-        // list[i] = work[i];//--------this line is added!
+        pthread_barrier_wait(&barrier);
+        for (i = ptr[my_id]; i < ptr[my_id+1]; i++)
+            list[i] = work[i];
     }
-    // for (i = ptr[my_id] + 1; i < ptr[my_id + 1]; i++)
-    // {        
-    //     list[i] = work[i];//--------this line is added!
-    // }    
-    return 0;
 }
 
 
-void* threadFuncAux(void* threadIDPtr){
-
-    int i, my_id;
-    int* threadID=(int*)threadIDPtr;
-    my_id=threadID[0];
-    // printf("My ID=%d\n",my_id);
-
-    for (i = ptr[my_id]; i < ptr[my_id + 1]; i++)
-    {
-        list[i] = work[i];
-    }
-    return 0;
-}
-
-// Sort list via parallel merge sort
-//
-// VS: ... to be parallelized using threads ...
-//
-void sort_list(int q)
-{
-    int my_id,i;
-    np = list_size / num_threads; // Sub list size
+void sort_list(){
     pthread_t threads[num_threads];
+    pthread_barrier_init(&barrier, NULL, num_threads);
+    int i;
+    
+    np = list_size / num_threads;     // Sub list size
 
     // Initialize starting position for each sublist
-    for (my_id = 0; my_id < num_threads; my_id++)
-    {
-        ptr[my_id] = my_id * np;
+    for (i = 0; i < num_threads; i++){
+        ptr[i] = i * np;
+        threadIDPtr[i] = i;
     }
     ptr[num_threads] = list_size;
-
-
-
-
-
-
-    // Sort local lists
-    // We might have 2^3 threads and 2^5 elemets in the list to sort. Since we have only 2^3 threads we cannot parallelize
-    // all of the levels. Intead we only parallel the LAST q level which means we have to sort after that level in some way.
-    // In this example, we have to sort 8 of lists with the size of 4. The following block does this for us.
-    for (my_id = 0; my_id < num_threads; my_id++)
-    {
-        my_list_size = ptr[my_id + 1] - ptr[my_id];
-        qsort(&list[ptr[my_id]], my_list_size, sizeof(int), compare_int);
-    }
-    if (DEBUG)
-        print_list(list, list_size);
-
-    // Sort list
-    // Now that the sublists have been sorted, we have to sort the first q levels in parallel. Remember that we have 2^q lists
-    // with the size of n/2^q. In our example it will be 8 lists with the size of 4. We don't need to sort anything at this point
-    // instead we have to merge them correctly, similar to merge sort.
     
+    for (i = 0; i < num_threads; i++)
+        pthread_create(&threads[i], NULL, threadFunc, &threadIDPtr[i]);
     
-    
-    
-    for(my_id=0;my_id<num_threads;my_id++){
-        myIDPtr[my_id]=my_id;
-        // printf("Mamad=%d\n",myIDPtr[my_id]);
-    }
-
-    for (level = 0; level < q; level++)
-    {
-        for(my_id=0;my_id<num_threads;my_id++){
-            pthread_create( &threads[my_id], NULL, threadFunc, (void*) &myIDPtr[my_id]);
-        }
-        for(my_id=0;my_id<num_threads;my_id++){
-            pthread_join(threads[my_id], NULL);
-        }
-        //instead of copy pasting the whole work to list, I just swapped their pointer
-        int* temp=list;
-        list=work;
-        work=temp;
-        if (DEBUG)
-            print_list(list, list_size);
-    }
+    for(i = 0; i < num_threads; i++)
+        pthread_join(threads[i], NULL);
 }
 
-// Main program - set up list of random integers and use threads to sort the list
-//
-// Input:
-//	k = log_2(list size), therefore list_size = 2^k
-//	q = log_2(num_threads), therefore num_threads = 2^q
-//
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
     struct timespec start, stop, stop_qsort;
     double total_time, time_res, total_time_qsort;
-    int k, q, j, error;
+    int k, j, error;
 
     // Read input, validate
-    if (argc != 3)
-    {
+    if (argc != 3){
         printf("Need two integers as input \n");
         printf("Use: <executable_name> <log_2(list_size)> <log_2(num_threads)>\n");
         exit(0);
     }
     k = atoi(argv[argc - 2]);
-    if ((list_size = (1 << k)) > MAX_LIST_SIZE)
-    {
+    if ((list_size = (1 << k)) > MAX_LIST_SIZE){
         printf("Maximum list size allowed: %d.\n", MAX_LIST_SIZE);
         exit(0);
     };
     q = atoi(argv[argc - 1]);
-    if ((num_threads = (1 << q)) > MAX_THREADS)
-    {
+    if ((num_threads = (1 << q)) > MAX_THREADS){
         printf("Maximum number of threads allowed: %d.\n", MAX_THREADS);
         exit(0);
     };
-    if (num_threads > list_size)
-    {
+    if (num_threads > list_size){
         printf("Number of threads (%d) < list_size (%d) not allowed.\n",
-               num_threads, list_size);
+              num_threads, list_size);
         exit(0);
     };
+    ptr = (int*)malloc((num_threads) * sizeof(int));
 
     // Allocate list, list_orig, and work
 
     list = (int *)malloc(list_size * sizeof(int));
     list_orig = (int *)malloc(list_size * sizeof(int));
     work = (int *)malloc(list_size * sizeof(int));
+    threadIDPtr = (int*)malloc(num_threads * sizeof(int));
 
-    ptr = (int *)malloc((num_threads+1) * sizeof(int));
-    myIDPtr = (int *)malloc((num_threads) * sizeof(int));
     // Initialize list of random integers; list will be sorted by
     // multi-threaded parallel merge sort
     // Copy list to list_orig; list_orig will be sorted by qsort and used
@@ -352,8 +261,8 @@ int main(int argc, char *argv[])
     // Create threads; each thread executes find_minimum
     clock_gettime(CLOCK_REALTIME, &start);
 
-    sort_list(q);
-    
+    sort_list();
+
     // Compute time taken
     clock_gettime(CLOCK_REALTIME, &stop);
     total_time = (stop.tv_sec - start.tv_sec) + 0.000000001 * (stop.tv_nsec - start.tv_nsec);
@@ -364,24 +273,18 @@ int main(int argc, char *argv[])
     total_time_qsort = (stop_qsort.tv_sec - stop.tv_sec) + 0.000000001 * (stop_qsort.tv_nsec - stop.tv_nsec);
 
     error = 0;
-    for (j = 1; j < list_size; j++)
-    {
-        if (list[j] != list_orig[j])
-            error = 1;
+    for (j = 1; j < list_size; j++){
+        if (list[j] != list_orig[j]) error = 1;
     }
 
-    if (error != 0)
-    {
-        printf("Houston, we have a problem!\n");
-    }
+    if (error != 0) printf("Houston, we have a problem!\n");
 
     // Print time taken
     printf("List Size = %d, Threads = %d, error = %d, time (sec) = %8.4f, qsort_time = %8.4f\n",
-           list_size, num_threads, error, total_time, total_time_qsort);
-
-    // VS: ... destroy mutex, condition variables, etc.
+          list_size, num_threads, error, total_time, total_time_qsort);
 
     free(list);
     free(work);
     free(list_orig);
+    free(threadIDPtr);
 }
