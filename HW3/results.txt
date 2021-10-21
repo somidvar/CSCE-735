@@ -1,0 +1,81 @@
+Part A
+The the list with size of 2**4 and thread num of 2**1
+List Size = 16, Threads = 2, error = 0, time (sec) =   0.0062, qsort_time =   0.0000
+The the list with size of 2**4 and thread num of 2**2
+List Size = 16, Threads = 4, error = 0, time (sec) =   0.0052, qsort_time =   0.0000
+The the list with size of 2**4 and thread num of 2**3
+List Size = 16, Threads = 8, error = 0, time (sec) =   0.0062, qsort_time =   0.0000
+----------------------
+The the list with size of 2**20 and thread num of 2**4
+List Size = 1048576, Threads = 16, error = 0, time (sec) =   0.0307, qsort_time =   0.1714
+The the list with size of 2**24 and thread num of 2**8
+List Size = 16777216, Threads = 256, error = 0, time (sec) =   0.9465, qsort_time =   3.3930
+ 
+ 
+Part B
+The the list with size of 2**12 and thread num of 2**0
+List Size = 4096, Threads = 1, error = 0, time (sec) =   0.0068, qsort_time =   0.0010
+The the list with size of 2**12 and thread num of 2**1
+List Size = 4096, Threads = 2, error = 0, time (sec) =   0.0062, qsort_time =   0.0010
+The the list with size of 2**12 and thread num of 2**2
+List Size = 4096, Threads = 4, error = 0, time (sec) =   0.0063, qsort_time =   0.0010
+The the list with size of 2**12 and thread num of 2**4
+List Size = 4096, Threads = 16, error = 0, time (sec) =   0.0070, qsort_time =   0.0007
+The the list with size of 2**12 and thread num of 2**6
+List Size = 4096, Threads = 64, error = 0, time (sec) =   0.0382, qsort_time =   0.0004
+The the list with size of 2**12 and thread num of 2**8
+List Size = 4096, Threads = 256, error = 0, time (sec) =   0.1548, qsort_time =   0.0004
+The the list with size of 2**12 and thread num of 2**10
+List Size = 4096, Threads = 1024, error = 0, time (sec) =   3.9377, qsort_time =   0.0004
+----------------------
+The the list with size of 2**20 and thread num of 2**0
+List Size = 1048576, Threads = 1, error = 0, time (sec) =   0.1822, qsort_time =   0.1704
+The the list with size of 2**20 and thread num of 2**1
+List Size = 1048576, Threads = 2, error = 0, time (sec) =   0.0993, qsort_time =   0.1708
+The the list with size of 2**20 and thread num of 2**2
+List Size = 1048576, Threads = 4, error = 0, time (sec) =   0.0590, qsort_time =   0.1710
+The the list with size of 2**20 and thread num of 2**4
+List Size = 1048576, Threads = 16, error = 0, time (sec) =   0.0327, qsort_time =   0.1720
+The the list with size of 2**20 and thread num of 2**6
+List Size = 1048576, Threads = 64, error = 0, time (sec) =   0.0666, qsort_time =   0.1720
+The the list with size of 2**20 and thread num of 2**8
+List Size = 1048576, Threads = 256, error = 0, time (sec) =   0.2557, qsort_time =   0.1718
+The the list with size of 2**20 and thread num of 2**10
+List Size = 1048576, Threads = 1024, error = 0, time (sec) =   4.2892, qsort_time =   0.1735
+----------------------
+The the list with size of 2**28 and thread num of 2**0
+WList Size = 268435456, Threads = 1, error = 0, time (sec) =  62.5524, qsort_time =  62.4927
+The the list with size of 2**28 and thread num of 2**1
+List Size = 268435456, Threads = 2, error = 0, time (sec) =  31.9857, qsort_time =  62.4439
+The the list with size of 2**28 and thread num of 2**2
+List Size = 268435456, Threads = 4, error = 0, time (sec) =  16.4552, qsort_time =  62.6292
+The the list with size of 2**28 and thread num of 2**4
+List Size = 268435456, Threads = 16, error = 0, time (sec) =   4.8979, qsort_time =  62.5794
+The the list with size of 2**28 and thread num of 2**6
+List Size = 268435456, Threads = 64, error = 0, time (sec) =   3.6154, qsort_time =  62.8772
+The the list with size of 2**28 and thread num of 2**8
+List Size = 268435456, Threads = 256, error = 0, time (sec) =   5.0896, qsort_time =  62.9075
+The the list with size of 2**28 and thread num of 2**10
+List Size = 268435456, Threads = 1024, error = 0, time (sec) =   9.0212, qsort_time =  62.9552
+----------------------
+ 
+ 
+Part C
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: cores and OMP_PROC_AFFINITY: master
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1740, qsort_time =  62.4892
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: cores and OMP_PROC_AFFINITY: close
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.0503, qsort_time =  62.9629
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: cores and OMP_PROC_AFFINITY: spread
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1430, qsort_time =  62.5478
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: sockets and OMP_PROC_AFFINITY: master
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1644, qsort_time =  62.5014
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: sockets and OMP_PROC_AFFINITY: close
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1504, qsort_time =  62.4262
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: sockets and OMP_PROC_AFFINITY: spread
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1268, qsort_time =  62.6039
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: threads and OMP_PROC_AFFINITY: master
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1461, qsort_time =  62.4438
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: threads and OMP_PROC_AFFINITY: close
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1507, qsort_time =  62.5484
+The the list with size of 2**28 and thread num of 2**5 using OMP_PLACES: threads and OMP_PROC_AFFINITY: spread
+List Size = 268435456, Threads = 32, error = 0, time (sec) =   3.1475, qsort_time =  62.5569
