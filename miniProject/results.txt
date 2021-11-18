@@ -1,0 +1,29 @@
+
+The matrix size=2^12 and leaf size=2^3
+Matrix Size = 4096,  Leaf Matrix Size = 8, Error = 0, num threads= 48, Execution Time =  17.2072
+----------------------
+
+The matrix size=2^12 and leaf size=2^3
+
+The matrix size=2^12 and leaf size=2^3
+Matrix Size = 4096,  Leaf Matrix Size = 8, Error = 0, num threads= 48, Execution Time =  15.6940
+----------------------
+
+The matrix size=2^12 and leaf size=2^6
+Matrix Size = 4096,  Leaf Matrix Size = 64, Error = 0 Execution Time = 131.2749
+----------------------
+
+The matrix size=2^12 and leaf size=2^6
+Matrix Size = 4096,  Leaf Matrix Size = 64, Error = 0 Execution Time = 132.9501
+----------------------
+
+The matrix size=2^12 and leaf size=2^6
+----------------------
+
+The matrix size=2^12 and leaf size=2^6
+mmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadmmadMatrix Size = 4096,  Leaf Matrix Size = 64, Error = 0 Execution Time =   8.3671
+----------------------
+
+The matrix size=2^12 and leaf size=2^6
+Matrix Size = 4096,  Leaf Matrix Size = 64, Error = 0 Execution Time = 130.9130
+----------------------

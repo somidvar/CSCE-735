@@ -1,0 +1,6 @@
+Rinverse.cpp(279): error: this pragma must immediately precede a statement
+  #pragma omp parallel shared(R)
+          ^
+
+compilation aborted for Rinverse.cpp (code 2)
+/var/spool/slurmd/job1921211/slurm_script: line 57: ./Rinverse.exe: No such file or directory
