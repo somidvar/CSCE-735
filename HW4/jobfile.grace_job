@@ -28,8 +28,9 @@ mpirun -np 8 ./qsort_hypercube.exe 4 -1 >>results.txt
 mpirun -np 16 ./qsort_hypercube.exe 4 0 >>results.txt
 mpirun -np 16 ./qsort_hypercube.exe 20480000 0 >>results.txt
 echo "-------------------------------" >> results.txt
-echo "Part 2" >> results.txt
 
+
+echo "Part 2" >> results.txt
 n=20480000
 for p in 1 2 4 8 16 32 64
 do
@@ -38,14 +39,25 @@ do
 	mpirun -np $p ./qsort_hypercube.exe $n 0 >> results.txt
 done
 echo "-------------------------------" >> results.txt
-echo "Part 3" >> results.txt
 
+
+echo "Part 3" >> results.txt
 n=20480000
 for p in 1 2 4 8 16 32 64
 do
 list=$(($n / $p))
 	mpirun -np $p ./qsort_hypercube.exe $list 0 >>results.txt
 done
+echo "-------------------------------" >> results.txt
+
+
+echo "Part 4" >> results.txt
+mpiicpc -o qsort_hypercube_descending.exe qsort_hypercube_descending.cpp
+mpirun -np 2 ./qsort_hypercube_descending.exe 4 -1 >>results.txt
+mpirun -np 4 ./qsort_hypercube_descending.exe 4 -2 >>results.txt
+mpirun -np 8 ./qsort_hypercube_descending.exe 4 -1 >>results.txt
+mpirun -np 16 ./qsort_hypercube_descending.exe 4 0 >>results.txt
+mpirun -np 16 ./qsort_hypercube_descending.exe 20480000 0 >>results.txt
 
 
 
