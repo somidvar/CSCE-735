@@ -1,37 +1,45 @@
 #include "majorProject.H"
 
-
 int main() {
+    xR = 0.2;
+    yR = 0.8;
+    m = 16;
+    l1 = 1.0;
+    l2 = 1.0;
+    t = 0.01;
+
     initialization();
     preparationHost();
     solver();
     return 0;
 }
+void initialization() {
+    RealF = 1 - (pow((xR - 0.5), 2) + pow((yR - 0.5), 2));
 
-void solver() {
+    n = m * m;
+    x = new double[m];
+    y = new double[m];
+
+    FFlat = new double[n];
+    KStarFlat = new double[n];
+    IFlat = new double[n * n];
+    KFlat = new double[n * n];
+
     for (int i = 0; i < n; i++) {
+        I = new double *[n];
+        K = new double *[n];
         for (int j = 0; j < n; j++) {
-            // I[i][j] += t;
-            // I[i][j] += K[i][j];
-            I[i][j] = rand() % 10;
+            I[j] = new double[n];
+            K[j] = new double[n];
         }
     }
-    double **L, **U;
-    for (int i = 0; i < n; i++) {
-        L = new double *[n];
-        U = new double *[n];
-        for (int j = 0; j < n; j++) {
-            L[j] = new double[n];
-            U[j] = new double[n];
+    for (int i = 0; i < m; i++) {
+        F = new double *[m];
+        KStar = new double *[m];
+        for (int j = 0; j < m; j++) {
+            F[j] = new double[m];
+            KStar[j] = new double[m];
         }
-    }
-    matrixConcat(F, FFlat, m);
-    LUDecomposition(I, L, U, n);
-    FFlat = LUSolverPrep(L, U, F);
-    matrixConcat(KStar, KStarFlat, m);
-    FStar = 0;
-    for (int i = 0; i < n; i++) {
-        FStar += FFlat[i] * KStarFlat[i];
     }
 }
 void preparationHost() {
@@ -81,38 +89,100 @@ void preparationHost() {
     }
 }
 
-void initialization() {
-    xR = 0.2;
-    yR = 0.1;
-    m = 2;
-    l1 = 1.0;
-    l2 = 1.0;
-    t = 0.01;
-    RealF = 1 - (pow((xR - 0.5), 2) + pow((yR - 0.5), 2));
-
-    n = m * m;
-    x = new double[m];
-    y = new double[m];
-
-    FFlat = new double[n];
-    KStarFlat = new double[n];
-    IFlat = new double[n * n];
-    KFlat = new double[n * n];
-
+void solver() {
+    double **L, **U;
     for (int i = 0; i < n; i++) {
-        I = new double *[n];
-        K = new double *[n];
         for (int j = 0; j < n; j++) {
-            I[j] = new double[n];
-            K[j] = new double[n];
+            I[i][j] += t;
+            I[i][j] += K[i][j];
         }
     }
-    for (int i = 0; i < m; i++) {
-        F = new double *[m];
-        KStar = new double *[m];
-        for (int j = 0; j < m; j++) {
-            F[j] = new double[m];
-            KStar[j] = new double[m];
+
+    matrixConcat(F, FFlat, m);
+    for (int i = 0; i < n; i++) {
+        L = new double *[n];
+        U = new double *[n];
+        for (int j = 0; j < n; j++) {
+            L[j] = new double[n];
+            U[j] = new double[n];
+        }
+    }
+
+    // LUDecomposition(I, L, U, n);
+    LUDecompositionPrep(I, L, U);
+    LUDecompositionTester(I, L, U);
+    FFlat = LUSolverPrep(L, U, F);
+    matrixConcat(KStar, KStarFlat, m);
+    FStar = 0;
+    for (int i = 0; i < n; i++) {
+        FStar += FFlat[i] * KStarFlat[i];
+    }
+    printf("The predicted value=%2.4f and the real is %2.4f\n", FStar, RealF);
+}
+void LUDecompositionTester(double **_I, double **_L, double **_U) {
+    double **temp;
+    for (int i = 0; i < n; i++) {
+        temp = new double *[n];
+        for (int j = 0; j < n; j++) {
+            temp[j] = new double[n];
+        }
+    }
+    matrixMul(_L, _U, temp, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            assert(fabs(_I[i][j] - temp[i][j]) < 0.001);
+        }
+    }
+}
+void LUDecompositionPrep(double **_I, double **_L, double **_U) {
+    matrixConcat(_I, IFlat, n);
+
+    double *LFlat = new double[n * n];
+    double *UFlat = new double[n * n];
+
+    double *cLFlat, *cUFlat, *cIFlat;
+
+    cudaMalloc(&cLFlat, n * n * sizeof(double));
+    cudaMalloc(&cUFlat, n * n * sizeof(double));
+    cudaMalloc(&cIFlat, n * n * sizeof(double));
+
+    cudaMemcpy(cIFlat, IFlat, n * n * sizeof(double), cudaMemcpyHostToDevice);
+
+    int TRHEAD_NUM = 4;
+    dim3 dimBlock(TRHEAD_NUM, TRHEAD_NUM);
+    dim3 dimGrid(n / TRHEAD_NUM, n / TRHEAD_NUM);
+    if (n % TRHEAD_NUM != 0)
+        assert(false);
+
+    for (int i = 0; i < n; i++) {
+        cudaLUFactorization<<<dimGrid, dimBlock>>>(cIFlat, cLFlat, cUFlat, i);
+    }
+
+    cudaMemcpy(LFlat, cLFlat, n * n * sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(UFlat, cUFlat, n * n * sizeof(double), cudaMemcpyDeviceToHost);
+
+    matrixUnConcat(_L, LFlat, n);
+    matrixUnConcat(_U, UFlat, n);
+}
+__global__ void cudaLUFactorization(double *_input, double *_L, double *_U, int _row) {
+
+
+
+
+    for (int k = i; k < matrixDim; k++) {
+        double sum = 0;
+        for (int j = 0; j < i; j++)
+            sum += (_L[i][j] * _U[j][k]);
+        _U[i][k] = _input[i][k] - sum;
+    }
+    for (int k = i; k < n; k++) {
+        if (i == k)
+            _L[i][i] = 1;
+        else {
+            double sum = 0;
+            for (int j = 0; j < i; j++)
+                sum += (_L[k][j] * _U[j][i]);
+            _L[k][i] = (_input[k][i] - sum) / _U[i][i];
         }
     }
 }
@@ -125,6 +195,7 @@ void LUDecomposition(double **_input, double **_L, double **_U, int matrixDim) {
                 sum += (_L[i][j] * _U[j][k]);
             _U[i][k] = _input[i][k] - sum;
         }
+
         for (int k = i; k < n; k++) {
             if (i == k)
                 _L[i][i] = 1;
@@ -138,8 +209,6 @@ void LUDecomposition(double **_input, double **_L, double **_U, int matrixDim) {
     }
 }
 
-__global__ void cudaLUFactorization(double *_input, double *_L, double *_U, int _matDim, int _threadNum) {
-}
 void matrixConcat(double **input, double *output, int matDim) {
     for (int x = 0; x < matDim; x++) {      // y direction
         for (int y = 0; y < matDim; y++) {  // x direction
@@ -231,14 +300,6 @@ double *LUSolverPrep(double **_L, double **_U, double **_Coeff) {  // Coeff will
         assert(false);
 
     cudaLUNormalizer<<<dimGrid, dimBlock>>>(cLFlat, cCoeffFlat, n);
-    // for (int i = 0; i < n; i++) {
-    //     for (int j = 0; j < n; j++) {
-    //         printf("%2.2f\t", _U[i][j]);
-    //     }
-    //     printf("\t\t%f\n", CoeffFlat[i]);
-    // }
-    // printf("==========\n");
-
     for (int i = 0; i < n; i++) {  // solving LW=F
         cudaLSolver<<<dimGrid, dimBlock>>>(cLFlat, cCoeffFlat, n, i);
     }
@@ -255,13 +316,14 @@ double *LUSolverPrep(double **_L, double **_U, double **_Coeff) {  // Coeff will
     matrixUnConcat(_U, UFlat, n);
     matrixUnConcat(_Coeff, CoeffFlat, m);
     return CoeffFlat;
-
-    // for (int i = 0; i < n; i++) {
-    //     for (int j = 0; j < n; j++) {
-    //         printf("%2.2f\t", _U[i][j]);
-    //     }
-    //     printf("\t\t%f\n", CoeffFlat[i]);
-    // }
+}
+void matrixPrinter(double **_mat, int _matDim) {
+    for (int i = 0; i < _matDim; i++) {
+        for (int j = 0; j < _matDim; j++) {
+            printf("%f\t", _mat[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 // void matrixMulPrep(double **A, double **B, double **C, int matDim) {
@@ -299,18 +361,18 @@ double *LUSolverPrep(double **_L, double **_U, double **_Coeff) {  // Coeff will
 //         Cvalue += cA[row * commonSize + e] * cB[e * commonSize + col];
 //     cC[row * commonSize + col] = Cvalue;
 // }
-// void matrixMul(double **a, double **b, double **c, int matDim) {
-//     double temp;
-//     for (int i = 0; i < matDim; i++) {
-//         for (int j = 0; j < matDim; j++) {
-//             temp = 0;
-//             for (int k = 0; k < matDim; k++) {  // common dimension
-//                 temp += a[i][k] * b[k][j];
-//             }
-//             c[i][j] = temp;
-//         }
-//     }
-// }
+void matrixMul(double **a, double **b, double **c, int matDim) {
+    double temp;
+    for (int i = 0; i < matDim; i++) {
+        for (int j = 0; j < matDim; j++) {
+            temp = 0;
+            for (int k = 0; k < matDim; k++) {  // common dimension
+                temp += a[i][k] * b[k][j];
+            }
+            c[i][j] = temp;
+        }
+    }
+}
 
 // void LSolver(double **_L, double *_B, int _matDim) {  // Solving LW=B knowing L is lower-triangular assuming L is matDim*matDim and W and B are matDim*1
 //     for (int i = 0; i < _matDim; i++) {               // i is row
