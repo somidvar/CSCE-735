@@ -1,20 +1,36 @@
 #ifndef majorProject_h
 #define majorProject_h
 
+#include <assert.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-void preparationHost();
-void initialization();
-void LUdecomposition(double **input, double **L, double **U, int matrixDim);
-void matrixConcat(double **input, double *ouput, int row, int column);
-void matrixTranspose(double **input, int matDim);
-void matrixMul(double** a, double**b, double**c,int aRow, int aCol, int bCol);
-void LSolver(double **L, double *B, int matDim);
-void USolver(double **U, double *B, int matDim);
-void solver();
-void test();
+double **K, **I, **F, **KStar;              // 2D arrays of I, K, F and KStar
+double *IFlat, *KFlat, *FFlat, *KStarFlat;  // 1D vectors of I, K F and K*
+double *x, *y;                              // grid x and y
+double l1, l2, t, d;                        // paramteres for the f function where l1 and l2 are normalization and t and d are noise
+double xR, yR;                              // coordinate of a random point
+double FStar, RealF;                        // predicted and real values of a random point
+int m, n;                                   // matrix sizes
+
+void preparationHost();                                                                               // instantiating the values of parameters and F function
+void initialization();                                                                                // memory allocation
+void LUDecomposition(double **input, double **L, double **U, int matrixDim);                          // Decomposing a matrix into L and U on CPU
+void matrixConcat(double **input, double *ouput, int matDim);                                         // concatanting a 2D array into a 1D vector on CPU
+void matrixUnConcat(double **input, double *ouput, int matDim);                                       // re-forming a 1D vector into 2D array on CPU
+void matrixTranspose(double **input, int matDim);                                                     // tarnsosing a 2D matrix on CPU
+void matrixMul(double **a, double **b, double **c, int matDim);                                       // multiplying two matrices on CPU
+void LSolver(double **L, double *B, int matDim);                                                      // Solving LW=F on CPU
+void USolver(double **U, double *B, int matDim);                                                      // Solving W=UX
+void matrixMulPrep(double **A, double **B, double **C, int matDim);                                   // preparing and calling matrix multipilication on GPU
+double *LUSolverPrep(double **_L, double **_U, double **_Coeff);                                      // preparing and calling solver on GPU
+void solver();                                                                                        // solving the problem on CPU
+__global__ void cudaMatrixMul(double *cA, double *cB, double *cC, int commonSize);                    // multiplying two matrices on GPU
+__global__ void cudaLUFactorization(double *input, double *L, double *U, int matDim, int threadNum);  // LU factorization on GPU
+__global__ void cudaLSolver(double *_L, double *_coeff, int matDim, int _rowCounter);                 // solving LW=F on GPU
+__global__ void cudaUSolver(double *_U, double *_coeff, int matDim, int _rowCounter);                 // solving W=UX on GPU
+__global__ void cudaLUNormalizer(double *_A, double *_coeff, int _matDim);                            // dividing a matrix by its diagonal elements on GPU
 #endif
