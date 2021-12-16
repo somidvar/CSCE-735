@@ -39,9 +39,6 @@ void initialization() {
     }
 }
 void preparationGPU() {
-    float *FFlat = new float[m * m];
-    float *KFlat = new float[n * n];
-    float *KStarFlat = new float[m * m];
     float *cFFlat, *cX, *cY, *cKFlat, *cKStarFlat;
 
     cudaMalloc(&cX, m * sizeof(float));
@@ -139,9 +136,8 @@ __global__ void cudaInitXY(float *_cX, float *_cY, int _matDim) {
 }
 void solver() {
     float **L, **U;
-    for (int i = 0; i < n; i++) {
-        K[i][i] += t + 1;
-    }
+    for(int i=0;i<n*n;i++)
+        KFlat[i+n*i]+=t + 1;
 
     matrixConcat(F, FFlat, m);
 
