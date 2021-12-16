@@ -1,8 +1,8 @@
 #include "majorProject.H"
 
 int main() {
-    xR = 0.2;
-    yR = 0.8;
+    xR = 0.25;
+    yR = 0.35;
     m = 16;
     l1 = 1.0;
     l2 = 1.0;
@@ -49,14 +49,27 @@ void preparationHost() {
         y[i] = i * 1.00 / (m + 1);
     }
 
-    for (int i = 0; i < m; i++) {  // initializing matrix F
-        for (int j = 0; j < m; j++) {
-            double d = rand() * 1.00 / (RAND_MAX);
-            d -= 0.5;
-            d /= 10;
-            F[i][j] = 1 - (pow(x[i] - 0.5, 2) + pow(y[j] - 0.5, 2)) + d;
-        }
-    }
+
+    double *FFlat = new double[m * m];
+    double *cFFlat,*cX,*cY;
+
+    cudaMalloc(&cFFlat, m * m * sizeof(double));
+    cudaMalloc(&cX, m  * sizeof(double));
+    cudaMalloc(&cY, m  * sizeof(double));
+
+    cudaMemcpy(cX, x, m * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(cY, y, m * sizeof(double), cudaMemcpyHostToDevice);
+
+    int TRHEAD_NUM = 16;
+    dim3 dimBlockF(TRHEAD_NUM, TRHEAD_NUM);
+    dim3 dimGridF(m / TRHEAD_NUM, m / TRHEAD_NUM);
+
+    if (m % TRHEAD_NUM != 0)
+        assert(false);
+
+    cudaInitF<<<dimGridF, dimBlockF>>>(cFFlat,m);
+    cudaMemcpy(FFlat, cFFlat, m * m * sizeof(double), cudaMemcpyDeviceToHost);
+    matrixUnConcat(F, FFlat, m);
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -88,7 +101,17 @@ void preparationHost() {
         }
     }
 }
+__global__ void cudaInitF(double *_cF,double* _cX, double* _cY,int _matDim){
+    int perThread = _matDim / blockDim.x / gridDim.x;
+    int row = perThread * (blockIdx.x * blockDim.x + threadIdx.x);
+    int column = perThread * (blockIdx.y * blockDim.y + threadIdx.y);
 
+    double d = rand() * 1.00 / (RAND_MAX);
+    d -= 0.5;
+    d /= 10;
+
+    _cF[column + row * _matDim] = 1 - (pow(_cX[column] - 0.5, 2) + pow(_cY[row] - 0.5, 2)) + d;
+}
 void solver() {
     double **L, **U;
     for (int i = 0; i < n; i++) {
@@ -149,7 +172,7 @@ void LUDecompositionPrep(double **_I, double **_L, double **_U) {
 
     cudaMemcpy(cIFlat, IFlat, n * n * sizeof(double), cudaMemcpyHostToDevice);
 
-    int TRHEAD_NUM = 4;
+    int TRHEAD_NUM = 16;
     dim3 dimBlockLU(TRHEAD_NUM, 1);
     dim3 dimGridLU(n / TRHEAD_NUM, 1);
 
@@ -161,9 +184,9 @@ void LUDecompositionPrep(double **_I, double **_L, double **_U) {
 
     for (int i = 0; i < n; i++) {
         cudaMatrixMul<<<dimGridMul, dimBlockMul>>>(cLFlat, cUFlat, cLUFlat, n);
-        cudaUFactorization<<<dimGridLU, dimBlockLU>>>(cIFlat, cLFlat, cUFlat, n, i);
+        cudaUFactorization<<<dimGridLU, dimBlockLU>>>(cIFlat, cLFlat, cUFlat, cLUFlat, n, i);
         cudaMatrixMul<<<dimGridMul, dimBlockMul>>>(cLFlat, cUFlat, cLUFlat, n);
-        cudaLFactorization<<<dimGridLU, dimBlockLU>>>(cIFlat, cLFlat, cUFlat, n, i);
+        cudaLFactorization<<<dimGridLU, dimBlockLU>>>(cIFlat, cLFlat, cUFlat, cLUFlat, n, i);
     }
 
     cudaMemcpy(LFlat, cLFlat, n * n * sizeof(double), cudaMemcpyDeviceToHost);
@@ -192,7 +215,7 @@ __global__ void cudaLFactorization(double *_input, double *_L, double *_U, doubl
     if (firstRow < _row)
         firstRow = _row;
 
-    for (int k = _row; k < _matDim; k++) {
+    for (int k = _row; k < lastRow; k++) {
         _L[_row + k * _matDim] = (_input[_row + k * _matDim] - _LU[_row + k * _matDim]) / _U[_row + _row * _matDim];
     }
 }
@@ -303,7 +326,7 @@ double *LUSolverPrep(double **_L, double **_U, double **_Coeff) {  // Coeff will
     cudaMemcpy(cUFlat, UFlat, n * n * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(cCoeffFlat, CoeffFlat, m * m * sizeof(double), cudaMemcpyHostToDevice);
 
-    int TRHEAD_NUM = 4;
+    int TRHEAD_NUM = 16;
     dim3 dimBlock(TRHEAD_NUM, 1);
     dim3 dimGrid(n / TRHEAD_NUM, 1);
     if (n % TRHEAD_NUM != 0)
