@@ -33,9 +33,10 @@ void solver();                                                       // solving 
 void LUDecompositionTester(double **_I, double **_L, double **_U);
 void matrixPrinter(double **_mat, int _matDim);
 
-__global__ void cudaMatrixMul(double *cA, double *cB, double *cC, int commonSize);      // multiplying two matrices on GPU
-__global__ void cudaLUFactorization(double *_input, double *_L, double *_U, int _row);  // LU factorization on GPU
-__global__ void cudaLSolver(double *_L, double *_coeff, int matDim, int _rowCounter);   // solving LW=F on GPU
-__global__ void cudaUSolver(double *_U, double *_coeff, int matDim, int _rowCounter);   // solving W=UX on GPU
-__global__ void cudaLUNormalizer(double *_A, double *_coeff, int _matDim);              // dividing a matrix by its diagonal elements on GPU
+__global__ void cudaMatrixMul(double *cA, double *cB, double *cC, int commonSize);                                 // multiplying two matrices on GPU
+__global__ void cudaUFactorization(double *_input, double *_L, double *_U, , double *_LU, int _matDim, int _row);  // U factorization on GPU
+__global__ void cudaLFactorization(double *_input, double *_L, double *_U, , double *_LU, int _matDim, int _row);  // L factorization on GPU
+__global__ void cudaLSolver(double *_L, double *_coeff, int matDim, int _rowCounter);                              // solving LW=F on GPU
+__global__ void cudaUSolver(double *_U, double *_coeff, int matDim, int _rowCounter);                              // solving W=UX on GPU
+__global__ void cudaLUNormalizer(double *_A, double *_coeff, int _matDim);                                         // dividing a matrix by its diagonal elements on GPU
 #endif

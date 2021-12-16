@@ -140,22 +140,30 @@ void LUDecompositionPrep(double **_I, double **_L, double **_U) {
     double *LFlat = new double[n * n];
     double *UFlat = new double[n * n];
 
-    double *cLFlat, *cUFlat, *cIFlat;
+    double *cLFlat, *cUFlat, *cLUFlat, *cIFlat;
 
     cudaMalloc(&cLFlat, n * n * sizeof(double));
     cudaMalloc(&cUFlat, n * n * sizeof(double));
+    cudaMalloc(&cLUFlat, n * n * sizeof(double));
     cudaMalloc(&cIFlat, n * n * sizeof(double));
 
     cudaMemcpy(cIFlat, IFlat, n * n * sizeof(double), cudaMemcpyHostToDevice);
 
     int TRHEAD_NUM = 4;
-    dim3 dimBlock(TRHEAD_NUM, TRHEAD_NUM);
-    dim3 dimGrid(n / TRHEAD_NUM, n / TRHEAD_NUM);
+    dim3 dimBlockLU(TRHEAD_NUM, 1);
+    dim3 dimGridLU(n / TRHEAD_NUM, 1);
+
+    dim3 dimBlockMul(TRHEAD_NUM, TRHEAD_NUM);
+    dim3 dimGridMul(n / TRHEAD_NUM, n / TRHEAD_NUM);
+
     if (n % TRHEAD_NUM != 0)
         assert(false);
 
     for (int i = 0; i < n; i++) {
-        cudaLUFactorization<<<dimGrid, dimBlock>>>(cIFlat, cLFlat, cUFlat, i);
+        cudaMatrixMul<<<dimGridMul, dimBlockMul>>>(cLFlat, cUFlat, cLUFlat, n);
+        cudaUFactorization<<<dimGridLU, dimBlockLU>>>(cIFlat, cLFlat, cUFlat, n, i);
+        cudaMatrixMul<<<dimGridMul, dimBlockMul>>>(cLFlat, cUFlat, cLUFlat, n);
+        cudaLFactorization<<<dimGridLU, dimBlockLU>>>(cIFlat, cLFlat, cUFlat, n, i);
     }
 
     cudaMemcpy(LFlat, cLFlat, n * n * sizeof(double), cudaMemcpyDeviceToHost);
@@ -164,26 +172,28 @@ void LUDecompositionPrep(double **_I, double **_L, double **_U) {
     matrixUnConcat(_L, LFlat, n);
     matrixUnConcat(_U, UFlat, n);
 }
-__global__ void cudaLUFactorization(double *_input, double *_L, double *_U, int _row) {
+__global__ void cudaUFactorization(double *_input, double *_L, double *_U, double *_LU, int _matDim, int _row) {
+    int rowPerThread = _matDim / blockDim.x / gridDim.x;
+    int firstRow = rowPerThread * (blockIdx.x * blockDim.x + threadIdx.x);
+    int lastRow = firstRow + rowPerThread;
 
+    if (firstRow < _row)
+        firstRow = _row;
 
-
-
-    for (int k = i; k < matrixDim; k++) {
-        double sum = 0;
-        for (int j = 0; j < i; j++)
-            sum += (_L[i][j] * _U[j][k]);
-        _U[i][k] = _input[i][k] - sum;
+    for (int k = firstRow; k < lastRow; k++) {
+        _U[k + _row * _matDim] = _input[k + _row * _matDim] - _LU[k + _row * _matDim];
     }
-    for (int k = i; k < n; k++) {
-        if (i == k)
-            _L[i][i] = 1;
-        else {
-            double sum = 0;
-            for (int j = 0; j < i; j++)
-                sum += (_L[k][j] * _U[j][i]);
-            _L[k][i] = (_input[k][i] - sum) / _U[i][i];
-        }
+}
+__global__ void cudaLFactorization(double *_input, double *_L, double *_U, double *_LU, int _matDim, int _row) {
+    int rowPerThread = _matDim / blockDim.x / gridDim.x;
+    int firstRow = rowPerThread * (blockIdx.x * blockDim.x + threadIdx.x);
+    int lastRow = firstRow + rowPerThread;
+
+    if (firstRow < _row)
+        firstRow = _row;
+
+    for (int k = _row; k < _matDim; k++) {
+        _L[_row + k * _matDim] = (_input[_row + k * _matDim] - _LU[_row + k * _matDim]) / _U[_row + _row * _matDim];
     }
 }
 
@@ -353,14 +363,14 @@ void matrixPrinter(double **_mat, int _matDim) {
 //     matrixUnConcat(C, CFlat, matDim);
 // }
 
-// __global__ void cudaMatrixMul(double *cA, double *cB, double *cC, int commonSize) {
-//     double Cvalue = 0;
-//     int row = blockIdx.y * blockDim.y + threadIdx.y;
-//     int col = blockIdx.x * blockDim.x + threadIdx.x;
-//     for (int e = 0; e < commonSize; ++e)
-//         Cvalue += cA[row * commonSize + e] * cB[e * commonSize + col];
-//     cC[row * commonSize + col] = Cvalue;
-// }
+__global__ void cudaMatrixMul(double *cA, double *cB, double *cC, int commonSize) {
+    double Cvalue = 0;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    for (int e = 0; e < commonSize; ++e)
+        Cvalue += cA[row * commonSize + e] * cB[e * commonSize + col];
+    cC[row * commonSize + col] = Cvalue;
+}
 void matrixMul(double **a, double **b, double **c, int matDim) {
     double temp;
     for (int i = 0; i < matDim; i++) {
