@@ -1,4 +1,0 @@
-Initialization is done
-Preparation is done
-Decomposition is done
-The predicted value=0.8955 and the real is 0.9150
