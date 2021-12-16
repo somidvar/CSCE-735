@@ -107,7 +107,7 @@ __global__ void cudaInitKStar(float *_cKStar, float *_cX, float *_cY, int _matDi
     int row = blockIdx.y * blockDim.y + threadIdx.y;
 
     float temp = (pow(_cX[column] - _xR, 2)) / (2 * _L1 * _L1) +
-                  (pow(_cY[row] - _yR, 2)) / (2 * _L2 * _L2);
+                 (pow(_cY[row] - _yR, 2)) / (2 * _L2 * _L2);
     temp = exp(-temp) / (sqrt(2 * M_PI));
     _cKStar[column + _matDim * row] = temp;
 }
@@ -136,8 +136,9 @@ __global__ void cudaInitXY(float *_cX, float *_cY, int _matDim) {
 }
 void solver() {
     float **L, **U;
-    for(int i=0;i<n*n;i++)
-        KFlat[i+n*i]+=t + 1;
+    for (int i = 0; i < n; i++) {
+        K[i][i] += t + 1;
+    }
 
     matrixConcat(F, FFlat, m);
 
