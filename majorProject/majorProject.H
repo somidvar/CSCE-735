@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-float **K, **F, **KStar;           // 2D arrays of I, K, F and KStar
 float *KFlat, *FFlat, *KStarFlat;  // 1D vectors of I, K F and K*
 float *x, *y;                      // grid x and y
 float l1, l2, t, d;                // paramteres for the f function where l1 and l2 are normalization and t and d are noise
@@ -20,13 +19,13 @@ int m, n;                           // matrix sizes
 
 void preparationGPU();                                              // instantiating the values of parameters and F function
 void initialization();                                               // memory allocation
-void LUDecompositionPrep(float **I, float **L, float **U);        // preparing and calling LUDecomposition on GPU
+void LUDecompositionPrep(float **L, float **U);        // preparing and calling LUDecomposition on GPU
 void matrixConcat(float **input, float *ouput, int matDim);        // concatanting a 2D array into a 1D vector on CPU
 void matrixUnConcat(float **input, float *ouput, int matDim);      // re-forming a 1D vector into 2D array on CPU
 void matrixTranspose(float **input, int matDim);                    // tarnsosing a 2D matrix on CPU
 void matrixMul(float **a, float **b, float **c, int matDim);      // multiplying two matrices on CPU
 void matrixMulPrep(float **A, float **B, float **C, int matDim);  // preparing and calling matrix multipilication on GPU
-float *LUSolverPrep(float **_L, float **_U, float **_Coeff);     // preparing and calling solver on GPU
+void LUSolverPrep(float **_L, float **_U);     // preparing and calling solver on GPU
 void solver();                                                       // solving the problem on CPU
 void LUDecompositionTester(float **_I, float **_L, float **_U);   // making sure that L*U==A
 void matrixPrinter(float **_mat, int _matDim);                      // printing a matrix

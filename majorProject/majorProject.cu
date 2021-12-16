@@ -25,18 +25,6 @@ void initialization() {
     FFlat = new float[n];
     KStarFlat = new float[n];
     KFlat = new float[n * n];
-
-    K = new float *[n];
-
-    for (int j = 0; j < n; j++) {
-        K[j] = new float[n];
-    }
-    F = new float *[m];
-    KStar = new float *[m];
-    for (int j = 0; j < m; j++) {
-        F[j] = new float[m];
-        KStar[j] = new float[m];
-    }
 }
 void preparationGPU() {
     float *cFFlat, *cX, *cY, *cKFlat, *cKStarFlat;
@@ -71,15 +59,12 @@ void preparationGPU() {
 
     cudaInitF<<<dimGridF, dimBlockF>>>(cFFlat, cX, cY, m);
     cudaMemcpy(FFlat, cFFlat, m * m * sizeof(float), cudaMemcpyDeviceToHost);
-    matrixUnConcat(F, FFlat, m);
 
     cudaInitK<<<dimGridK, dimBlockK>>>(cKFlat, cX, cY, m, l1, l2);
     cudaMemcpy(KFlat, cKFlat, n * n * sizeof(float), cudaMemcpyDeviceToHost);
-    matrixUnConcat(K, KFlat, n);
 
     cudaInitKStar<<<dimGridKStar, dimBlockKStar>>>(cKStarFlat, cX, cY, m, l1, l2, xR, yR);
     cudaMemcpy(KStarFlat, cKStarFlat, m * m * sizeof(float), cudaMemcpyDeviceToHost);
-    matrixUnConcat(KStar, KStarFlat, m);
 
     cudaFree(cFFlat);
     cudaFree(cX);
@@ -137,10 +122,10 @@ __global__ void cudaInitXY(float *_cX, float *_cY, int _matDim) {
 void solver() {
     float **L, **U;
     for (int i = 0; i < n; i++) {
-        K[i][i] += t + 1;
+        KFlat[i+n*i] += t + 1;
     }
 
-    matrixConcat(F, FFlat, m);
+    // matrixConcat(F, FFlat, m);
 
     L = new float *[n];
     U = new float *[n];
@@ -150,11 +135,9 @@ void solver() {
     }
 
     // LUDecomposition(K, L, U, n);
-    LUDecompositionPrep(K, L, U);
+    LUDecompositionPrep(L, U);
     printf("Decomposition is done\n");
-    // LUDecompositionTester(K, L, U);
-    FFlat = LUSolverPrep(L, U, F);
-    matrixConcat(KStar, KStarFlat, m);
+    LUSolverPrep(L, U);
     FStar = 0;
     for (int i = 0; i < n; i++) {
         FStar += FFlat[i] * KStarFlat[i];
@@ -167,7 +150,7 @@ void LUDecompositionTester(float **_K, float **_L, float **_U) {
     for (int j = 0; j < n; j++) {
         temp[j] = new float[n];
     }
-
+    
     matrixMul(_L, _U, temp, n);
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -175,9 +158,7 @@ void LUDecompositionTester(float **_K, float **_L, float **_U) {
         }
     }
 }
-void LUDecompositionPrep(float **_K, float **_L, float **_U) {
-    matrixConcat(_K, KFlat, n);
-
+void LUDecompositionPrep(float **_L, float **_U) {
     float *LFlat = new float[n * n];
     float *UFlat = new float[n * n];
 
@@ -299,24 +280,22 @@ __global__ void cudaUSolver(float *_U, float *_coeff, int _matDim, int _row) {  
     }
 }
 
-float *LUSolverPrep(float **_L, float **_U, float **_Coeff) {  // Coeff will be our result of (tI+k)^-1*F
-    float *LFlat, *UFlat, *CoeffFlat;
+void LUSolverPrep(float **_L, float **_U) {  // Coeff will be our result of (tI+k)^-1*F
+    float *LFlat, *UFlat;
     LFlat = new float[n * n];
     UFlat = new float[n * n];
-    CoeffFlat = new float[m * m];
 
     matrixConcat(_L, LFlat, n);
     matrixConcat(_U, UFlat, n);
-    matrixConcat(_Coeff, CoeffFlat, m);
 
-    float *cLFlat, *cUFlat, *cCoeffFlat;
+    float *cLFlat, *cUFlat, *cFFlat;
     cudaMalloc(&cLFlat, n * n * sizeof(float));
     cudaMalloc(&cUFlat, n * n * sizeof(float));
-    cudaMalloc(&cCoeffFlat, m * m * sizeof(float));
+    cudaMalloc(&cFFlat, m * m * sizeof(float));
 
     cudaMemcpy(cLFlat, LFlat, n * n * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(cUFlat, UFlat, n * n * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(cCoeffFlat, CoeffFlat, m * m * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(cFFlat, FFlat, m * m * sizeof(float), cudaMemcpyHostToDevice);
 
     int TRHEAD_NUM = 16;
     dim3 dimBlock(TRHEAD_NUM, 1);
@@ -324,23 +303,21 @@ float *LUSolverPrep(float **_L, float **_U, float **_Coeff) {  // Coeff will be 
     if (n % TRHEAD_NUM != 0)
         assert(false);
 
-    cudaLUNormalizer<<<dimGrid, dimBlock>>>(cLFlat, cCoeffFlat, n);
+    cudaLUNormalizer<<<dimGrid, dimBlock>>>(cLFlat, cFFlat, n);
     for (int i = 0; i < n; i++) {  // solving LW=F
-        cudaLSolver<<<dimGrid, dimBlock>>>(cLFlat, cCoeffFlat, n, i);
+        cudaLSolver<<<dimGrid, dimBlock>>>(cLFlat, cFFlat, n, i);
     }
-    cudaLUNormalizer<<<dimGrid, dimBlock>>>(cUFlat, cCoeffFlat, n);
+    cudaLUNormalizer<<<dimGrid, dimBlock>>>(cUFlat, cFFlat, n);
     for (int i = n - 1; i >= 0; i--) {  // solving UX=W
-        cudaUSolver<<<dimGrid, dimBlock>>>(cUFlat, cCoeffFlat, n, i);
+        cudaUSolver<<<dimGrid, dimBlock>>>(cUFlat, cFFlat, n, i);
     }
 
-    cudaMemcpy(CoeffFlat, cCoeffFlat, m * m * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(FFlat, cFFlat, m * m * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(LFlat, cLFlat, n * n * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(UFlat, cUFlat, n * n * sizeof(float), cudaMemcpyDeviceToHost);
 
     matrixUnConcat(_L, LFlat, n);
     matrixUnConcat(_U, UFlat, n);
-    matrixUnConcat(_Coeff, CoeffFlat, m);
-    return CoeffFlat;
 }
 void matrixPrinter(float **_mat, int _matDim) {
     for (int i = 0; i < _matDim; i++) {
